@@ -20,7 +20,7 @@ Currently, 747 will only run on Linux , windows and probably Mac OS X (not teste
 - re
 
 ## Getting started
-You should have postgreSQL installed and create a user named 'admin' with password 'admin', then create a database named 'test' under that user, run the `init.sql` to create necessary tables. At last run the `747.py`, it will grab the data for you and store them in the database.
+You should have postgreSQL installed and create a user named 'postgres' with password 'postgres', then create a database named 'test' under that user, run the `init.sql` to create necessary tables. At last run the `747.py`, it will grab the data for you and store them in the database.
 
 ## Documentation
 not complete

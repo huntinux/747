@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python2
 # -*- coding: utf-8 -*-
 
 # 引入相应的模块
@@ -30,7 +30,7 @@ power=''
 desct=''
 planetype='Boeing 747-400'
 print '==========extracting-seats============'
-conn=psycopg2.connect("user=admin password=admin dbname=test")  # 连接数据库
+conn=psycopg2.connect("user=postgres password=postgres dbname=test")  # 连接数据库
 for td in soup.find_all(td_pppclass_is_standard) :
         if(i % 6 == 0):
                 seatnum=td.string       # 座位编号
@@ -50,7 +50,7 @@ for td in soup.find_all(td_pppclass_is_standard) :
                 print (c_id,seatnum,cls,seattype,video,power,desct,planetype)
                 
                 # 存入数据库
-                #conn=psycopg2.connect("user=admin password=admin dbname=test") 
+                #conn=psycopg2.connect("user=postgres password=postgres dbname=test") 
                 cur = conn.cursor()
                 cur.execute("INSERT INTO seats(id, seatnum, cls, seattype, video, power, desct, planetype) \
                         values(%s, %s, %s, %s, %s, %s, %s, %s);",(c_id,seatnum,cls,seattype,video,power,desct,planetype))
@@ -71,7 +71,7 @@ c_width=''      #
 c_details=''    #
 c_id=0          # ID
 print '======extracting-seating-detail======='
-conn=psycopg2.connect("user=admin password=admin dbname=test") # 连接数据库
+conn=psycopg2.connect("user=postgres password=postgres dbname=test") # 连接数据库
 for td in soup.find_all('td',class_=re.compile('item')) :
         if(td.parent.parent.parent['class'] == ['seat-list']):
                 ## 提取数据
