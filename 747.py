@@ -46,20 +46,19 @@ for td in soup.find_all(td_pppclass_is_standard) :
     elif ( i % 6 == 5):
         desct = td.string       # 其他描述
 
-        i = i + 1
-        if(i % 6 == 0):         # 6个td标签组成一组数据，插入到数据库中。
-            print (c_id,seatnum,cls,seattype,video,power,desct,planetype)
+    i = i + 1
+    if(i % 6 == 0):         # 6个td标签组成一组数据，插入到数据库中。
+    	print (c_id,seatnum,cls,seattype,video,power,desct,planetype)
+    	# 存入数据库
+        #conn=psycopg2.connect("user=postgres password=postgres dbname=test") 
+        cur = conn.cursor()
+        cur.execute("INSERT INTO seats(id, seatnum, cls, seattype, video, power, desct, planetype) \
+                values(%s, %s, %s, %s, %s, %s, %s, %s);",(c_id,seatnum,cls,seattype,video,power,desct,planetype))
+        cur.close() 
+        conn.commit() 
+        #conn.close() 
 
-                # 存入数据库
-                #conn=psycopg2.connect("user=postgres password=postgres dbname=test") 
-                cur = conn.cursor()
-                cur.execute("INSERT INTO seats(id, seatnum, cls, seattype, video, power, desct, planetype) \
-                        values(%s, %s, %s, %s, %s, %s, %s, %s);",(c_id,seatnum,cls,seattype,video,power,desct,planetype))
-                cur.close() 
-                conn.commit() 
-                #conn.close() 
-
-                c_id = c_id + 1
+        c_id = c_id + 1
 conn.close()    # 关闭数据库
 print '================done=================='
 
@@ -84,21 +83,21 @@ for td in soup.find_all('td',class_=re.compile('item')) :
         elif ( i % 4 == 1):
             for s in td.strings:
                 c_pitch = s
-            elif ( i % 4 == 2):
-                c_width = td.string
-            elif ( i % 4 == 3):
-                c_details = td.p.span.string
+        elif ( i % 4 == 2):
+            c_width = td.string
+        elif ( i % 4 == 3):
+            c_details = td.p.span.string
 
-            ## 每四个一组，存入数据库中
-            i = i + 1
-            if(i % 4 == 0):
-                print(c_id,c_class,c_pitch,c_width,c_details,planetype) 
-                    cur = conn.cursor()
-                    cur.execute("insert into seating_detail (c_id, c_class, c_pitch, c_width, c_details, planetype) \
+        ## 每四个一组，存入数据库中
+        i = i + 1
+        if(i % 4 == 0):
+            print(c_id,c_class,c_pitch,c_width,c_details,planetype) 
+            cur = conn.cursor()
+            cur.execute("insert into seating_detail (c_id, c_class, c_pitch, c_width, c_details, planetype) \
                             values(%s, %s, %s, %s, %s, %s);",(c_id,c_class,c_pitch,c_width,c_details,planetype))
-                    cur.close() 
-                    conn.commit() 
-                    c_id = c_id + 1
+            cur.close() 
+            conn.commit() 
+            c_id = c_id + 1
 
 conn.close()    # 关闭数据库
 print '===============done==============='
