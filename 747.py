@@ -31,7 +31,6 @@ desct=''
 planetype='Boeing 747-400'
 print '==========extracting-seats============'
 conn=psycopg2.connect("user=postgres password=postgres dbname=test")  # 连接数据库
-
 for td in soup.find_all(td_pppclass_is_standard) :
     if(i % 6 == 0):
         seatnum=td.string       # 座位编号
@@ -75,9 +74,6 @@ conn=psycopg2.connect("user=postgres password=postgres dbname=test") # 连接数
 for td in soup.find_all('td',class_=re.compile('item')) :
     if(td.parent.parent.parent['class'] == ['seat-list']):
         ## 提取数据
-        #print td
-        #td  # 如果使用上面的print打印，速度会很慢
-
         if(i % 4 == 0):
             c_class=td.string
         elif ( i % 4 == 1):
