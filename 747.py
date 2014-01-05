@@ -19,7 +19,7 @@ soup = BeautifulSoup(data)  # 用BS解析此html
 #  提取出所有name为td且其父亲的父亲的父亲的class属性为'standard'的标签，就是要提取的每种座位的信息
 #  每6个td标签组成一组数据，插入到数据库中的seats表中。
 def td_pppclass_is_standard(tag):
-        return tag.name == 'td' and tag.parent.parent.parent['class'] == ['standard']
+    return tag.name == 'td' and tag.parent.parent.parent['class'] == ['standard']
 i=0
 c_id=0
 seatnum=''
@@ -31,24 +31,25 @@ desct=''
 planetype='Boeing 747-400'
 print '==========extracting-seats============'
 conn=psycopg2.connect("user=postgres password=postgres dbname=test")  # 连接数据库
+
 for td in soup.find_all(td_pppclass_is_standard) :
-        if(i % 6 == 0):
-                seatnum=td.string       # 座位编号
-        elif ( i % 6 == 1):
-                cls=td.string           # 座位类别
-        elif ( i % 6 == 2):
-                seattype = td.string    # 座位描述
-        elif ( i % 6 == 3):
-                video = td.string       # 是否有TV
-        elif ( i % 6 == 4):
-                power = td.string       # 是否有电源
-        elif ( i % 6 == 5):
-                desct = td.string       # 其他描述
+    if(i % 6 == 0):
+        seatnum=td.string       # 座位编号
+    elif ( i % 6 == 1):
+        cls=td.string           # 座位类别
+    elif ( i % 6 == 2):
+        seattype = td.string    # 座位描述
+    elif ( i % 6 == 3):
+        video = td.string       # 是否有TV
+    elif ( i % 6 == 4):
+        power = td.string       # 是否有电源
+    elif ( i % 6 == 5):
+        desct = td.string       # 其他描述
 
         i = i + 1
         if(i % 6 == 0):         # 6个td标签组成一组数据，插入到数据库中。
-                print (c_id,seatnum,cls,seattype,video,power,desct,planetype)
-                
+            print (c_id,seatnum,cls,seattype,video,power,desct,planetype)
+
                 # 存入数据库
                 #conn=psycopg2.connect("user=postgres password=postgres dbname=test") 
                 cur = conn.cursor()
@@ -73,31 +74,31 @@ c_id=0          # ID
 print '======extracting-seating-detail======='
 conn=psycopg2.connect("user=postgres password=postgres dbname=test") # 连接数据库
 for td in soup.find_all('td',class_=re.compile('item')) :
-        if(td.parent.parent.parent['class'] == ['seat-list']):
-                ## 提取数据
-                #print td
-                #td  # 如果使用上面的print打印，速度会很慢
+    if(td.parent.parent.parent['class'] == ['seat-list']):
+        ## 提取数据
+        #print td
+        #td  # 如果使用上面的print打印，速度会很慢
 
-                if(i % 4 == 0):
-                        c_class=td.string
-                elif ( i % 4 == 1):
-                        for s in td.strings:
-                                c_pitch = s
-                elif ( i % 4 == 2):
-                        c_width = td.string
-                elif ( i % 4 == 3):
-                        c_details = td.p.span.string
+        if(i % 4 == 0):
+            c_class=td.string
+        elif ( i % 4 == 1):
+            for s in td.strings:
+                c_pitch = s
+            elif ( i % 4 == 2):
+                c_width = td.string
+            elif ( i % 4 == 3):
+                c_details = td.p.span.string
 
-                ## 每四个一组，存入数据库中
-                i = i + 1
-                if(i % 4 == 0):
-                        print(c_id,c_class,c_pitch,c_width,c_details,planetype) 
-                        cur = conn.cursor()
-                        cur.execute("insert into seating_detail (c_id, c_class, c_pitch, c_width, c_details, planetype) \
-                                values(%s, %s, %s, %s, %s, %s);",(c_id,c_class,c_pitch,c_width,c_details,planetype))
-                        cur.close() 
-                        conn.commit() 
-                        c_id = c_id + 1
-                        
+            ## 每四个一组，存入数据库中
+            i = i + 1
+            if(i % 4 == 0):
+                print(c_id,c_class,c_pitch,c_width,c_details,planetype) 
+                    cur = conn.cursor()
+                    cur.execute("insert into seating_detail (c_id, c_class, c_pitch, c_width, c_details, planetype) \
+                            values(%s, %s, %s, %s, %s, %s);",(c_id,c_class,c_pitch,c_width,c_details,planetype))
+                    cur.close() 
+                    conn.commit() 
+                    c_id = c_id + 1
+
 conn.close()    # 关闭数据库
 print '===============done==============='
