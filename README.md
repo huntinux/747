@@ -23,7 +23,7 @@ Currently, 747 will only run on Linux , windows and probably Mac OS X (not teste
 You should have postgreSQL installed and create a user named 'postgres' with password 'postgres', then create a database named 'test' under that user, run the `init.sql` to create necessary tables. At last run the `747.py`, it will grab the data for you and store them in the database.
 
 ## Documentation
-not complete
+not complete.
 
 ## What's with the name?
 _747_ is the name of an airplane ,the full name is _Boeing 747_.
