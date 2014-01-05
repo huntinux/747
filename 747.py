@@ -47,8 +47,8 @@ for td in soup.find_all(td_pppclass_is_standard) :
 
     i = i + 1
     if(i % 6 == 0):         # 6个td标签组成一组数据，插入到数据库中。
-    	print (c_id,seatnum,cls,seattype,video,power,desct,planetype)
-    	# 存入数据库
+        print (c_id,seatnum,cls,seattype,video,power,desct,planetype)
+        # 存入数据库
         #conn=psycopg2.connect("user=postgres password=postgres dbname=test") 
         cur = conn.cursor()
         cur.execute("INSERT INTO seats(id, seatnum, cls, seattype, video, power, desct, planetype) \
