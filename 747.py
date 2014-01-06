@@ -6,6 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 import re       # 使用正则表达式
 import psycopg2 # 操作数据库postgreSQL
+import sys
 
 # 获取网页
 url  = 'http://www.seatguru.com/airlines/Air_China/Air_China_Boeing_747-400.php'
@@ -29,8 +30,15 @@ video=''
 power=''
 desct=''
 planetype='Boeing 747-400'
+
+# 连接数据库
+try:
+    conn=psycopg2.connect("user=postgres password=postgres dbname=test")  
+except:
+    print "can't connect to database"
+    sys.exit(1)
+
 print '==========extracting-seats============'
-conn=psycopg2.connect("user=postgres password=postgres dbname=test")  # 连接数据库
 for td in soup.find_all(td_pppclass_is_standard) :
     if(i % 6 == 0):
         seatnum=td.string       # 座位编号
@@ -46,17 +54,19 @@ for td in soup.find_all(td_pppclass_is_standard) :
         desct = td.string       # 其他描述
 
     i = i + 1
-    if(i % 6 == 0):         # 6个td标签组成一组数据，插入到数据库中。
+    if(i % 6 == 0):             # 6个td标签组成一组数据，插入到数据库中。
         print (c_id,seatnum,cls,seattype,video,power,desct,planetype)
-        # 存入数据库
-        #conn=psycopg2.connect("user=postgres password=postgres dbname=test") 
         cur = conn.cursor()
-        cur.execute("INSERT INTO seats(id, seatnum, cls, seattype, video, power, desct, planetype) \
+        try:
+            cur.execute("INSERT INTO seats(id, seatnum, cls, seattype, video, power, desct, planetype) \
                 values(%s, %s, %s, %s, %s, %s, %s, %s);",(c_id,seatnum,cls,seattype,video,power,desct,planetype))
+        except Exception, e:
+            print "can't insert the above record, the reason is :"
+            print e.pgerror
+            sys.exit(1)
+
         cur.close() 
         conn.commit() 
-        #conn.close() 
-
         c_id = c_id + 1
 conn.close()    # 关闭数据库
 print '================done=================='
@@ -69,8 +79,15 @@ c_pitch=''      #
 c_width=''      # 
 c_details=''    #
 c_id=0          # ID
+
+# 连接数据库
+try:
+    conn=psycopg2.connect("user=postgres password=postgres dbname=test") 
+except:
+    print "can't connect to database"
+    sys.exit(1)
+
 print '======extracting-seating-detail======='
-conn=psycopg2.connect("user=postgres password=postgres dbname=test") # 连接数据库
 for td in soup.find_all('td',class_=re.compile('item')) :
     if(td.parent.parent.parent['class'] == ['seat-list']):
         ## 提取数据
@@ -89,8 +106,13 @@ for td in soup.find_all('td',class_=re.compile('item')) :
         if(i % 4 == 0):
             print(c_id,c_class,c_pitch,c_width,c_details,planetype) 
             cur = conn.cursor()
-            cur.execute("insert into seating_detail (c_id, c_class, c_pitch, c_width, c_details, planetype) \
+            try:
+                cur.execute("insert into seating_detail (c_id, c_class, c_pitch, c_width, c_details, planetype) \
                             values(%s, %s, %s, %s, %s, %s);",(c_id,c_class,c_pitch,c_width,c_details,planetype))
+            except Exception, e:
+                print "can't insert the above record, the reason is:"
+                print e.pgerror
+                sys.exit(1)
             cur.close() 
             conn.commit() 
             c_id = c_id + 1
