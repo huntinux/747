@@ -1,121 +1,172 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
 
-# 引入相应的模块
 import requests
 from bs4 import BeautifulSoup
-import re       # 使用正则表达式
-import psycopg2 # 操作数据库postgreSQL
+import re       
+import psycopg2 
 import sys
+import urllib
+import os
 
-# 获取网页
+# get the html page
 url  = 'http://www.seatguru.com/airlines/Air_China/Air_China_Boeing_747-400.php'
-r    = requests.get(url)  # 发出request 得到 response
-data = r.text             # r.text为response的正文，也就是html文件的内容。
+r    = requests.get(url)  
+data = r.text             
 
-# 解析网页
-soup = BeautifulSoup(data)  # 用BS解析此html
+# soup it 
+soup = BeautifulSoup(data) 
+
+## grab plane information
+planeid=0
+name=audio=video=AcPower=food=overview=seatmap=seatmapkey=''
+#get plane name
+for pname in soup.find_all('h2',class_='h2-fix') :
+	name=pname.string
+#get auidio video acpower food
+i = 0
+for div in soup.find_all('div',id = re.compile('link')) :
+	if(i % 4 == 0):
+		audio=div.p.string       
+	elif ( i % 4 == 1):
+		video=div.p.string   
+	elif ( i % 4 == 2):
+		AcPower = div.p.string    
+	elif ( i % 4 == 3):
+		food = div.p.string
+	i = i + 1
+#get overview
+for div in soup.find_all('div',class_ = 'tips-box') :
+	overview = div.p.string
+# get seatmap
+imgpath = 'img'
+if (not os.path.exists(imgpath)):
+	print "create dir " + imgpath
+	os.mkdir(imgpath)
+else:
+	print "dir "+ imgpath +" exists"
+
+if (not os.path.exists(imgpath + '/' + name )):
+	os.mkdir(imgpath + '/' + name)
+else:
+	print "dir " + imgpath + '/' + name + " exists"
+for img in soup.find_all('img',class_="plane"): 
+	imgurl = img['src']	
+	urllib.urlretrieve(imgurl, imgpath + '/' + name + '/seatmap')
+	seatmap = os.getcwd() + '/' + imgpath + '/' + name + '/seatmap'
+# get seatmapkey
+for img in soup.find_all('img',class_="legend"): 
+	imgurl = img['src']	
+	urllib.urlretrieve(imgurl, imgpath + '/' + name + '/seatmapkey')
+	seatmapkey = os.getcwd() + '/' + imgpath + '/' + name + '/seatmapkey'
+
+print (planeid, name, audio, video, AcPower, food, overview, seatmap, seatmapkey)
+# insert data into database
+try:
+	conn=psycopg2.connect("user=postgres password=postgres dbname=test")  
+except:
+	print "can't connect to database"
+	sys.exit(1)
+cur = conn.cursor()
+try:
+	cur.execute("INSERT INTO planes(id, name, audio, video, acpower, food, overview, seatmap, seatmapkey) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s);",(planeid,name,audio,video,AcPower,food,overview,seatmap,seatmapkey))
+except Exception, e:
+	print "can't insert the above record, the reason is :"
+	print e.pgerror
+	sys.exit(1)
+cur.close() 
+conn.commit() 
+conn.close() 
 
 ## 提取每个座位的信息
 #  提取出所有name为td且其父亲的父亲的父亲的class属性为'standard'的标签，就是要提取的每种座位的信息
 #  每6个td标签组成一组数据，插入到数据库中的seats表中。
 def td_pppclass_is_standard(tag):
-    return tag.name == 'td' and tag.parent.parent.parent['class'] == ['standard']
+	return tag.name == 'td' and tag.parent.parent.parent['class'] == ['standard']
 i=0
-c_id=0
-seatnum=''
-cls=''
-seattype=''
-video=''
-power=''
-desct=''
-planetype='Boeing 747-400'
-
+id=0
+seatnum=cls=seattype=video=acpower=descpt=''
 # 连接数据库
 try:
-    conn=psycopg2.connect("user=postgres password=postgres dbname=test")  
+	conn=psycopg2.connect("user=postgres password=postgres dbname=test")  
 except:
-    print "can't connect to database"
-    sys.exit(1)
-
+	print "can't connect to database"
+	sys.exit(1)
 print '==========extracting-seats============'
 for td in soup.find_all(td_pppclass_is_standard) :
-    if(i % 6 == 0):
-        seatnum=td.string       # 座位编号
-    elif ( i % 6 == 1):
-        cls=td.string           # 座位类别
-    elif ( i % 6 == 2):
-        seattype = td.string    # 座位描述
-    elif ( i % 6 == 3):
-        video = td.string       # 是否有TV
-    elif ( i % 6 == 4):
-        power = td.string       # 是否有电源
-    elif ( i % 6 == 5):
-        desct = td.string       # 其他描述
+	if(i % 6 == 0):
+		seatnum=td.string       # 座位编号
+	elif ( i % 6 == 1):
+		cls=td.string           # 座位类别
+	elif ( i % 6 == 2):
+		seattype = td.string    # 座位描述
+	elif ( i % 6 == 3):
+		video = td.string       # 是否有TV
+	elif ( i % 6 == 4):
+		acpower = td.string     # 是否有电源
+	elif ( i % 6 == 5):
+		descpt = td.string      # 其他描述
 
-    i = i + 1
-    if(i % 6 == 0):             # 6个td标签组成一组数据，插入到数据库中。
-        print (c_id,seatnum,cls,seattype,video,power,desct,planetype)
-        cur = conn.cursor()
-        try:
-            cur.execute("INSERT INTO seats(id, seatnum, cls, seattype, video, power, desct, planetype) \
-                values(%s, %s, %s, %s, %s, %s, %s, %s);",(c_id,seatnum,cls,seattype,video,power,desct,planetype))
-        except Exception, e:
-            print "can't insert the above record, the reason is :"
-            print e.pgerror
-            sys.exit(1)
+	i = i + 1
+	if(i % 6 == 0):             # 6个td标签组成一组数据，插入到数据库中。
+		print (planeid,id,seatnum,cls,seattype,video,acpower,descpt)
+		cur = conn.cursor()
+		try:
+			cur.execute("INSERT INTO seats(planeid, id, seatnum, cls, seattype, video, acpower, descpt) \
+					VALUES(%s, %s, %s, %s, %s, %s, %s, %s);",(planeid,id,seatnum,cls,seattype,video,acpower,descpt))
+		except Exception, e:
+			print "can't insert the above record, the reason is :"
+			print e.pgerror
+			sys.exit(1)
 
-        cur.close() 
-        conn.commit() 
-        c_id = c_id + 1
+		cur.close() 
+		conn.commit() 
+		id = id + 1
 conn.close()    # 关闭数据库
 print '================done=================='
 
 
 ##解析seating detail
-i=0             # 每四个数据一组
-c_class=''      # 座位类型，对应数据库表seat_detail 中的 c_class 
-c_pitch=''      # 
-c_width=''      # 
-c_details=''    #
-c_id=0          # ID
-
+i = 0         
+id = 0
+cls=pitch=width=details=''
 # 连接数据库
 try:
-    conn=psycopg2.connect("user=postgres password=postgres dbname=test") 
+	conn=psycopg2.connect("user=postgres password=postgres dbname=test") 
 except:
-    print "can't connect to database"
-    sys.exit(1)
+	print "can't connect to database"
+	sys.exit(1)
 
 print '======extracting-seating-detail======='
 for td in soup.find_all('td',class_=re.compile('item')) :
-    if(td.parent.parent.parent['class'] == ['seat-list']):
-        ## 提取数据
-        if(i % 4 == 0):
-            c_class=td.string
-        elif ( i % 4 == 1):
-            for s in td.strings:
-                c_pitch = s
-        elif ( i % 4 == 2):
-            c_width = td.string
-        elif ( i % 4 == 3):
-            c_details = td.p.span.string
+	if(td.parent.parent.parent['class'] == ['seat-list']):
+		## 提取数据
+		if(i % 4 == 0):
+			cls=td.string
+		elif ( i % 4 == 1):
+			for s in td.strings:
+				pitch = s
+		elif ( i % 4 == 2):
+			width = td.string
+		elif ( i % 4 == 3):
+			details = td.p.span.string
 
-        ## 每四个一组，存入数据库中
-        i = i + 1
-        if(i % 4 == 0):
-            print(c_id,c_class,c_pitch,c_width,c_details,planetype) 
-            cur = conn.cursor()
-            try:
-                cur.execute("insert into seating_detail (c_id, c_class, c_pitch, c_width, c_details, planetype) \
-                            values(%s, %s, %s, %s, %s, %s);",(c_id,c_class,c_pitch,c_width,c_details,planetype))
-            except Exception, e:
-                print "can't insert the above record, the reason is:"
-                print e.pgerror
-                sys.exit(1)
-            cur.close() 
-            conn.commit() 
-            c_id = c_id + 1
+		## 每四个一组，存入数据库中
+		i = i + 1
+		if(i % 4 == 0):
+			print(planeid,id,cls,pitch,width,details) 
+			cur = conn.cursor()
+			try:
+				cur.execute("insert into seating_detail (planeid, id, cls, pitch, width, details) \
+						values(%s, %s, %s, %s, %s, %s);",(planeid, id, cls, pitch, width, details))
+			except Exception, e:
+				print "can't insert the above record, the reason is:"
+				print e
+				sys.exit(1)
+			cur.close() 
+			conn.commit() 
+			id = id + 1
 
 conn.close()    # 关闭数据库
 print '===============done==============='
+
