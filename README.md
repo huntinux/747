@@ -6,7 +6,7 @@ Web page information grabbing script in Python
 
 ## Models
 
-Right now, 747 can grabbing information on a single page [http://www.seatguru.com/airlines/Air_China/Air_China_Boeing_747-400.php](http://www.seatguru.com/airlines/Air_China/Air_China_Boeing_747-400.php) using getpage.py and [http://www.seatguru.com/airlines/Air_China/information.php](http://www.seatguru.com/airlines/Air_China/information.php) using airlist.py 
+Right now, 747 can grab information on a single page [http://www.seatguru.com/airlines/Air_China/Air_China_Boeing_747-400.php](http://www.seatguru.com/airlines/Air_China/Air_China_Boeing_747-400.php) using getpage.py and [http://www.seatguru.com/airlines/Air_China/information.php](http://www.seatguru.com/airlines/Air_China/information.php) using airlist.py 
 
 
 ## Compatibility
