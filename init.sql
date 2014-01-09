@@ -1,7 +1,7 @@
-CREATE	TABLE planes 
+CREATE TABLE planes 
 (
 	id integer NOT NULL,
-	name 	text,
+	name text,
 	in_flight_amenities text,
 	overview text,
 	seatmap text, 
@@ -9,7 +9,7 @@ CREATE	TABLE planes
 	CONSTRAINT planes_pkey PRIMARY KEY (id)
 );
 
-CREATE	TABLE seating_detail 
+CREATE TABLE seating_detail 
 (
 	planeid integer REFERENCES planes(id),
 	id integer NOT NULL,
@@ -20,16 +20,16 @@ CREATE	TABLE seating_detail
 	CONSTRAINT sd_pkey PRIMARY KEY (planeid,id)
 );
 
-CREATE	TABLE seats
+CREATE TABLE seats
 (
 	planeid integer REFERENCES planes(id),
 	id integer NOT NULL,
 	seatnum text,
-	cls 	text,
+	cls text,
 	seattype text,
-	video 	text,
+	video text,
 	ACpower text,
-	descpt 	text,
+	descpt text,
 	CONSTRAINT seats_pkey PRIMARY KEY (planeid,id)
 );
 
