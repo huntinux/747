@@ -19,22 +19,36 @@ def grab_page_info(num,url):
 
 	## grab plane information
 	planeid=num
-	name=audio=video=AcPower=food=overview=seatmap=seatmapkey=''
+	name=in_flight_amenities=overview=seatmap=seatmapkey=''
 	#get plane name
 	for pname in soup.find_all('h2',class_='h2-fix') :
 		name=pname.string
-	#get auidio video acpower food
-	i = 0
-	for div in soup.find_all('div',id = re.compile('link')) :
-		if(i % 4 == 0):
-			audio=div.p.string       
-		elif ( i % 4 == 1):
-			video=div.p.string   
-		elif ( i % 4 == 2):
-			AcPower = div.p.string    
-		elif ( i % 4 == 3):
-			food = div.p.string
-		i = i + 1
+	#get in_flight_amenities:auidio video acpower food and so on.
+	head = []
+	body = []
+	in_flight_amenities=''
+	for li in soup.find_all('li', id=re.compile('link')):
+		head.append(li.string)
+	for div in soup.find_all('div', id=re.compile('link')):
+		tmpstr = ''
+		for substr in div.strings:
+			tmpstr = tmpstr + substr
+		body.append(tmpstr)
+	for i in range(0,len(head)-1): # pattern is 'name:value;'
+		in_flight_amenities = in_flight_amenities + head[i] + ':' + body[i] + ';'
+
+	#i = 0
+	#for div in soup.find_all('div',id = re.compile('link')) :
+	#	if(i % 4 == 0):
+	#		audio=div.p.string       
+	#	elif ( i % 4 == 1):
+	#		video=div.p.string   
+	#	elif ( i % 4 == 2):
+	#		AcPower = div.p.string    
+	#	elif ( i % 4 == 3):
+	#		food = div.p.string
+	#	i = i + 1
+
 	#get overview
 	for div in soup.find_all('div',class_ = 'tips-box') :
 		overview = div.p.string
@@ -68,7 +82,7 @@ def grab_page_info(num,url):
 			imgurl = img['src']	
 			urllib.urlretrieve(imgurl, imgpath + '/' + name + '/seatmapkey')
 
-	print (planeid, name, audio, video, AcPower, food, overview, seatmap, seatmapkey)
+	print (planeid, name, in_flight_amenities, overview, seatmap, seatmapkey)
 	# insert data into database
 	try:
 		conn=psycopg2.connect("user=postgres password=postgres dbname=test")  
@@ -77,10 +91,11 @@ def grab_page_info(num,url):
 		sys.exit(1)
 	cur = conn.cursor()
 	try:
-		cur.execute("INSERT INTO planes(id, name, audio, video, acpower, food, overview, seatmap, seatmapkey) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s);",(planeid,name,audio,video,AcPower,food,overview,seatmap,seatmapkey))
+		cur.execute("INSERT INTO planes(id, name, in_flight_amenities, overview, seatmap, seatmapkey) VALUES(%s, %s, %s, %s, %s, %s);",(planeid,name,in_flight_amenities,overview,seatmap,seatmapkey))
 	except Exception, e:
 		print "can't insert the above record, the reason is :"
-		print e.pgerror
+		print e
+		#print e.pgerror
 		sys.exit(1)
 	cur.close() 
 	conn.commit() 

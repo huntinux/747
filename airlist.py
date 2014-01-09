@@ -19,8 +19,4 @@ for a in soup.find_all(a_class_standard_pname_td):
 	url = baseurl + a['href']
 	getpage.grab_page_info(i, url)
 	i = i + 1
-	if(i == 10):
-		break
 
-#url  = 'http://www.seatguru.com/airlines/Air_China/Air_China_Boeing_747-400.php'
-#getpage.grab_page_info(0, url)
